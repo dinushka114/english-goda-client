@@ -1,18 +1,55 @@
+import 'dart:convert';
+
 import 'package:client_update/http_services/http_service.dart';
+import 'package:client_update/models/models.dart';
 import 'package:client_update/screens/grammer_lessons/grammer_lesson_categories.dart';
 import 'package:client_update/screens/grammer_lessons/grammer_lesson_detail.dart';
 import 'package:client_update/utils/constants.dart';
 import 'package:client_update/widgets/card-lists/latest_lesson_card.dart';
+import 'package:client_update/widgets/card-lists/lesson.dart';
 import 'package:client_update/widgets/drawer.dart';
 import 'package:client_update/widgets/headers/home_page_header.dart';
 import 'package:client_update/widgets/spinner.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 import 'package:page_transition/page_transition.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
 
-  HttpService httpService = HttpService();
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+
+  bool isLoading = true;
+
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
+  List<GrammerLessonsByTitle>   grammerLessons=[];
+  List<GrammerLessonsByTitle> searchListItems = [];
+
+  void fetchGrammarLessons() async {
+
+    var response =  await get("https://nestjs-now-inky.vercel.app/api/users/grammer-lessons");
+    var lessonModel = json.decode(response.body);
+    for(var d in lessonModel){
+      GrammerLessonsByTitle lesson = GrammerLessonsByTitle(d["title"],d["content"]);
+      setState(() {
+        isLoading = false;
+        grammerLessons.add(lesson);
+      });
+    }
+
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    fetchGrammarLessons();
+    searchListItems = grammerLessons;
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +184,60 @@ class HomePage extends StatelessWidget {
 
                 SizedBox(height: 20.0),
 
-                Text("Latest Grammar Lessons",
+                Container(
+                  decoration: BoxDecoration(
+                    color: Constants.lightViolet,
+                    borderRadius: BorderRadius.all(
+                      Radius.circular(20.0),
+                    ),
+                  ),
+                  child: TextField(
+                    onChanged: (text){
+                      text = text.toLowerCase();
+                      setState(() {
+                        searchListItems = grammerLessons.where((lesson){
+                          var lessonContent = lesson.content.toLowerCase();
+                          return lessonContent.contains(text);
+                        }).toList();
+
+                      });
+                    },
+                    style: TextStyle(
+                      fontSize: 12.0,
+                      color: Constants.textDark,
+                    ),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.all(20.0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0),
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                        borderRadius: BorderRadius.circular(20.0),
+                      ),
+                      hintText: "Search lessons",
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          Icons.search,
+                          color: Constants.textDark,
+                        ),
+                        onPressed: () {
+                          debugPrint("Search pressed");
+                        },
+                      ),
+                      hintStyle: TextStyle(
+                        fontSize: 15.0,
+                      ),
+                    ),
+                    maxLines: 1,
+
+                  ),
+                ),
+
+                SizedBox(height: 20.0,),
+
+                Text("Mix Grammar Lessons",
                     style: TextStyle(
                       color: Constants.textDark,
                       fontSize: 18,
@@ -156,65 +246,25 @@ class HomePage extends StatelessWidget {
 
                 SizedBox(height: 20.0),
 
-                // List of courses
-                // ListView(
-                //   scrollDirection: Axis.vertical,
-                //   physics: NeverScrollableScrollPhysics(),
-                //   shrinkWrap: true,
-                //   children: <Widget>[
-                //     MixGrammarLesson(
-                //       color: Constants.lightPink,
-                //       title: "Adobe XD Prototyping",
-                //       progress: "25%",
-                //       percentage: 0.25,
-                //     ),
-                //     MixGrammarLesson(
-                //       color: Constants.lightYellow,
-                //       title: "Sketch shortcuts and tricks",
-                //       progress: "50%",
-                //       percentage: 0.5,
-                //     ),
-                //     MixGrammarLesson(
-                //       color: Constants.lightViolet,
-                //       title: "UI Motion Design in After Effects",
-                //       progress: "75%",
-                //       percentage: 0.75,
-                //     ),
-                //   ],
-                // ),
-              FutureBuilder(
-                future: httpService.fetchGrammarLessons(),
-                  builder: (BuildContext context , AsyncSnapshot snap){
-                    if(snap.hasData){
-                      return ListView.builder(
-                          scrollDirection: Axis.vertical,
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: 4,
-                          itemBuilder: (BuildContext context , int index){
-                            return   GestureDetector(
-                              onTap: (){
-                                Navigator.push(
-                                    context,
-                                    PageTransition(
-                                        child: GrammerLesson(
-                                          lesson: snap.data[index],
-                                        ),
-                                        type: PageTransitionType.rightToLeft));
-                              },
-                              child: MixGrammarLesson(
-                                        color: Constants.lightViolet,
-                                        title: snap.data[index].title,
-                                        progress: "75%",
-                                        percentage: 0.75,
-                                      ),
-                            );
-                          }
-                      );
+                isLoading==false ?  ListView.builder(
+                    scrollDirection: Axis.vertical,
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount:searchListItems.length > 4 ? 4 : searchListItems.length ,
+                    itemBuilder: (BuildContext context , int index){
+                      return GestureDetector(
+                          onTap: (){
+                            Navigator.push(
+                                context,
+                                PageTransition(
+                                    child: GrammerLesson(
+                                      lesson: searchListItems[index],
+                                    ),
+                                    type: PageTransitionType.rightToLeft));
+                          },
+                          child: Lesson(title: searchListItems[index].title));
                     }
-                    return Center(child: loadingSpinKit(context),);
-                  }
-              )
+                )  : Center(child: loadingSpinKit(context),)
               ],
             ),
           ),

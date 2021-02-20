@@ -109,20 +109,24 @@ class HttpService {
     // return lessons;
   }
 
-  Future<List<VocabularyLessonByTitle>> fetchVocabularyLessons() async{
-    List<VocabularyLessonByTitle> vocLessons=[];
+ fetchVocabularyLessons() async{
+    List<VocabularyLessonByTitle>   vocLessons=[];
 
-    var data = await get("https://nestjs-now-inky.vercel.app/api/users/vocabularies");
+    var response = await get("https://nestjs-now-inky.vercel.app/api/users/vocabularies");
+    var lessonModel = VocabularyLessonByTitle.fromJson(json.decode(response.body));
+    vocLessons.add(lessonModel);
 
-    var jsonData = json.decode(data.body);
-
-    for(var d in jsonData){
-      VocabularyLessonByTitle lesson = VocabularyLessonByTitle(d["title"],d["content"]);
-      vocLessons.add(lesson);
-    }
-
-    return List.from(vocLessons.reversed);
+    return lessonModel;
+    // var jsonData = json.decode(data.body);
+    //
+    // for(var d in jsonData){
+    //   VocabularyLessonByTitle lesson = VocabularyLessonByTitle(d["title"],d["content"]);
+    //   vocLessons.add(lesson);
+    // }
+    //
+    // return List.from(vocLessons.reversed.toList());
   }
+
 
 
 }

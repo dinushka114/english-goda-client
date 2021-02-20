@@ -40,26 +40,7 @@ class VocabularyLessonCategories extends StatelessWidget {
                     Navigator.pop(context);
                   },
                 ),
-              ),
-              Container(
-                margin: new EdgeInsets.symmetric(
-                    horizontal: Constants.mainPadding,
-                    vertical: Constants.mainPadding
-                ),
-                height: 44,
-                width: 44,
-                child: FlatButton(
-                  padding: EdgeInsets.all(0),
-                  color: Colors.white.withOpacity(0.3),
-                  child: Icon(Icons.menu, color: Colors.white),
-                  shape: new RoundedRectangleBorder(
-                    borderRadius: new BorderRadius.circular(10.0),
-                  ),
-                  onPressed: () {
-                    debugPrint("Menu pressed");
-                  },
-                ),
-              ),
+              )
             ],
           ),
         ),
